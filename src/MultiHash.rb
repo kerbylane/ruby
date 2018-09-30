@@ -18,10 +18,7 @@ class MultiHash
   
   def get(*keys)
     puts "in get #{@levels}"
-    if keys.length != @levels
-      raise ArgumentError.new("incorrect number of keys (#{keys.length}) supplied, #{@levels} required")
-    end
-    return @hash[keys[0]].get(*keys[1..-1])
+    return keys.length == 1 ? @hash[keys[0]] : @hash[keys[0]].get(*keys[1..-1])
   end
   
   # TODO: how do we update a value, for instance, increment a count?
@@ -30,9 +27,7 @@ class MultiHash
     if args.length != @levels + 1
       raise ArgumentError.new("incorrect number of arguments (#{args.length}) supplied, #{@levels + 1} required")
     end
-    # puts "dev: adding key #{args[0]}"
     @hash[args[0]].put(*args[1..-1])
-    # puts "dev: after put #{@levels} keys = #{@hash.keys()}"
   end
   
   def remove(keys)

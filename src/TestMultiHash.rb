@@ -2,32 +2,6 @@ $:.unshift File.join(File.dirname(__FILE__))
 
 require "MultiHash"
 
-class TestMultiHash
-  def TestOneLevel
-    hash = MultiHash.OneLevelHash.new(Integer)
-    
-    puts hash[0]
-    
-    hash[1] = "one"
-    puts hash[1]
-  end
-end
-
-
-#hash = OneLevelHash.new(0)
-#
-#puts hash.get(0)
-#puts hash.get(1)
-#
-#hash.put([1,"one"])
-#puts hash.get(1)
-#
-#puts hash
-#
-#hash.each do |k,v|
-#  puts k.to_s + " " + v
-#end
-
 puts "work with MH 2"
 hash = MultiHash.new(2,0)
 hash.put("one","one-one",11)
@@ -51,8 +25,24 @@ for e in hash.get_all
   puts e.join(",")
 end
 
-puts hash.get("two","two-one","two-one-two")
-puts hash.get("two","two-two")
+puts "Now get with fully specified keys"
+value = hash.get("two","two-one","two-one-one")
+if value != 211
+    puts "incorrect value, #{value}, found, 211 expected"
+end
 
+puts "Get with only 2 keys"
+inner_hash = hash.get("two","two-one")
+puts "get this hash:"
+inner_hash.each { |k,v| puts "#{k}\t=> #{v}"}
+if inner_hash.get("two-one-one") != 211
+  puts "incorrect inner instance found, for value for key two-one-one was not 211"
+end
+
+begin
+  hash.get("one", "two", "three", "four")
+rescue ArgumentError
+  puts "correctly identified that too many levels of keys were given"
+end
 
 puts "done with all tests"
