@@ -5,10 +5,8 @@ class MultiHash
   
   def initialize(levels, default)
     @levels = levels
-    if @levels < 2
-      raise Exception.new("levels must be higher than 1")
-    end
-    puts "dev: init MH #{@levels}"
+    raise Exception.new("levels must be higher than 1") if @levels < 2
+    
     if @levels == 2
       @hash = Hash.new { |h,k| h[k] = OneLevelHash.new(default) }
     else
@@ -20,43 +18,63 @@ class MultiHash
   # depengind on whether the keys are in the MultiHash and whether or not the number of keys
   # matches the levels of it.
   def get(*keys)
-    puts "in get #{@levels}"
     if keys.length > @levels
-      raise ArgumentError.new("incorrect number of arguments (#{keys.length}) supplied, instance only has #{@levels} levels")
+      raise ArgumentError.new(
+        "incorrect number of arguments (#{keys.length}) supplied, instance only has #{@levels} levels")
     end
-    return keys.length == 1 ? @hash[keys[0]] : @hash[keys[0]].get(*keys[1..-1])
+    return nil if not @hash.has_key? keys[0]
+    keys.length == 1 ? @hash[keys[0]] : @hash[keys[0]].get(*keys[1..-1])
   end
   
   def put(*args)
-    puts "dev: MH#{@levels}.put(#{args})"
     if args.length != @levels + 1
       raise ArgumentError.new("incorrect number of arguments (#{args.length}) supplied, #{@levels + 1} required")
     end
     @hash[args[0]].put(*args[1..-1])
   end
   
-  def remove(keys)
+  def has_key?(*keys)
+    return @hash.has_key? keys[0] if keys.length == 1
+    
+    has_key? keys[1..-1]
+  end
+  
+  def delete(*keys)
     # remove any entries matching the keys
+    # If the resulting subhash is empty remove it too.
     # TODO: fill this in
+    if keys.length > @levels
+      raise ArgumentError.new("too many keys supplied (#{args.length}), instance only has #{@levels} levels")
+    end
+    
+    return @hash.delete(keys[0]) if keys.length == 1
+      
+    top_key = keys[0]
+    inner = @hash[top_key]
+    return if inner.nil?
+
+    deleted = inner.delete(*keys[1..-1])
+    @hash.delete(top_key) if inner.size == 0
+    deleted
+  end
+  
+  def size()
+    total = 0
+    @hash.values.each { |inner| total += inner.size }
+    total
   end
   
   def each
-    puts "in MultiHash.each level #{@levels}"
-    return @hash.each { |k,v| yield([k,v]) }
+    @hash.each { |k,v| yield([k,v]) }
   end
 
+  # Returns an array with fully specified keys-value entries
   def get_all
-    puts "in get_all #{@levels}"
-    puts "we have keys of #{@hash.keys()}"
-    resp = []
     @hash.each do |k,v|
-      # puts "dev: process k=#{k}"
-      for e in v.get_all
-        array = [k].push(*e)
-        resp << array
+      v.get_all do |e|
+        yield [k].push(*e)
       end
     end
-    return resp
   end
   
 end
@@ -66,39 +84,37 @@ class OneLevelHash
   @hash = nil
   
   def initialize(default)
-    # puts "dev: init OLH"
     @hash = Hash.new {default}
   end
   
   def get(key)
-    # puts "dev OLH.get(#{key})"
-    return @hash[key]
+    @hash[key]
   end
   
   def put(*args)
-    # puts "dev: OLH put[#{args[0]}] #{args[1]}"
     @hash[args[0]] = args[1]
-    # puts "dev: after put OLH keys = #{@hash.keys()}"
   end
   
-  def remove(key)
+  def delete(key)
     @hash.delete(key)
   end
   
+  def size()
+    @hash.size()
+  end
+  
+  def has_key?()
+    @hash.has_key?
+  end
+  
   def each
-    # puts "in OneLevelHash.each"
     return @hash.each { |k,v| yield([k,v]) }
   end
 
   def get_all
-    puts "dev: OLH get_all"
-    puts "dev: we have keys of #{@hash.keys()}"
-    resp = []
     @hash.each do |k,v|
-      resp << [k,v]
+      yield [k,v]
     end
-    puts "dev: returning #{resp.length} entries: #{resp}"
-    return resp
   end
   
 end 
