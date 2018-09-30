@@ -16,18 +16,45 @@ class MultiHash
     end
   end
   
+  # Returns value identified by keys supplied.  This is either a nil, single value, or submap,
+  # depengind on whether the keys are in the MultiHash and whether or not the number of keys
+  # matches the levels of it.
   def get(*keys)
     puts "in get #{@levels}"
+    if keys.length > @levels
+      raise ArgumentError.new("incorrect number of arguments (#{keys.length}) supplied, instance only has #{@levels} levels")
+    end
     return keys.length == 1 ? @hash[keys[0]] : @hash[keys[0]].get(*keys[1..-1])
   end
   
-  # TODO: how do we update a value, for instance, increment a count?
   def put(*args)
     puts "dev: MH#{@levels}.put(#{args})"
     if args.length != @levels + 1
       raise ArgumentError.new("incorrect number of arguments (#{args.length}) supplied, #{@levels + 1} required")
     end
     @hash[args[0]].put(*args[1..-1])
+  end
+  
+  # Update a value by executing a user-supplied block to which we will give all 
+  def update(*keys)
+    if !block_given?
+      return
+    end
+    if keys.length > @levels
+      raise ArgumentError.new("incorrect number of arguments (#{keys.length}) supplied, at most #{@levels} accepted")
+    end
+    
+    if keys.length == @levels
+      yield(keys,get(*keys))
+    else
+      get(*keys).each do |sub_key, sub_hash|
+        sub_hash.get_all.each do |subs|
+          key_array = keys + [sub_key]
+          key_array.push(*subs[0..-2])
+          yield(key_array, subs[-1])
+        end
+      end
+    end
   end
   
   def remove(keys)
@@ -41,8 +68,8 @@ class MultiHash
   end
 
   def get_all
-    # puts "in get_all #{@levels}"
-    # puts "we have keys of #{@hash.keys()}"
+    puts "in get_all #{@levels}"
+    puts "we have keys of #{@hash.keys()}"
     resp = []
     @hash.each do |k,v|
       # puts "dev: process k=#{k}"
@@ -86,12 +113,13 @@ class OneLevelHash
   end
 
   def get_all
-    # puts "OLH get_all"
-    # puts "we have keys of #{@hash.keys()}"
+    puts "dev: OLH get_all"
+    puts "dev: we have keys of #{@hash.keys()}"
     resp = []
     @hash.each do |k,v|
       resp << [k,v]
     end
+    puts "dev: returning #{resp.length} entries: #{resp}"
     return resp
   end
   
