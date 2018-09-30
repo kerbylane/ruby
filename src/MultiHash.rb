@@ -35,28 +35,6 @@ class MultiHash
     @hash[args[0]].put(*args[1..-1])
   end
   
-  # Update a value by executing a user-supplied block to which we will give all 
-  def update(*keys)
-    if !block_given?
-      return
-    end
-    if keys.length > @levels
-      raise ArgumentError.new("incorrect number of arguments (#{keys.length}) supplied, at most #{@levels} accepted")
-    end
-    
-    if keys.length == @levels
-      yield(keys,get(*keys))
-    else
-      get(*keys).each do |sub_key, sub_hash|
-        sub_hash.get_all.each do |subs|
-          key_array = keys + [sub_key]
-          key_array.push(*subs[0..-2])
-          yield(key_array, subs[-1])
-        end
-      end
-    end
-  end
-  
   def remove(keys)
     # remove any entries matching the keys
     # TODO: fill this in

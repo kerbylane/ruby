@@ -45,30 +45,4 @@ rescue ArgumentError
   puts "correctly identified that too many levels of keys were given"
 end
 
-puts "test the update method when all keys specified"
-hash.update("two","two-one","two-one-one") do |keys,value|
-  hash.put(*keys,value + 1)
-end
-
-value = hash.get("two","two-one","two-one-one")
-puts "dev: got value #{value}"
-if value != 212
-  puts "ERROR: increment did not work"
-end
-
-puts "test update of a subhash"
-hash.update("one") do |keys,value|
-  hash.put(*keys, value + 1)
-end
-
-value = hash.get("one", "one-one", "one-one-one")
-if value != 112
-  puts "ERROR: increment didn't work, expected 112, got #{value}"
-end
-
-value = hash.get("one", "one-two", "one-two-one")
-if value != 122
-  puts "ERROR: increment didn't work, expected 122, got #{value}"
-end
-
 puts "done with all tests"
